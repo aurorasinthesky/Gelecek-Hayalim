@@ -1,1 +1,75 @@
+import streamlit as st
 
+# Kahve makinesindeki kaynaklar
+resources = {
+    'water': 500,
+    'milk': 500,
+    'coffee': 200,
+    'money': 0
+}
+
+# İçecek bilgileri
+MENU = {
+    'espresso': {'ingredients': {'water': 50, 'coffee': 18}, 'cost': 1.5},
+    'latte': {'ingredients': {'water': 200, 'milk': 150, 'coffee': 24}, 'cost': 2.5},
+    'cappuccino': {'ingredients': {'water': 250, 'milk': 100, 'coffee': 24}, 'cost': 3.0},
+}
+
+# Basit bir rapor sınıfı, sadece raporu gösterir
+class Report:
+    @staticmethod
+    def display():
+        st.write("### Current Resources:")
+        for item, amount in resources.items():
+            if item == 'money':
+                st.write(f"{item.capitalize()}: ${amount:.2f}")
+            else:
+                st.write(f"{item.capitalize()}: {amount}ml")
+
+# Malzeme kontrol fonksiyonu
+def check_resources(drink):
+    for item, amount in MENU[drink]['ingredients'].items():
+        if resources[item] < amount:
+            st.write(f"Sorry, there is not enough {item}.")
+            return False
+    return True
+
+# Para işlemi fonksiyonu
+def process_payment(cost):
+    st.write("Please insert coins.")
+    quarters = st.number_input("How many quarters?", min_value=0, step=1) * 0.25
+    dimes = st.number_input("How many dimes?", min_value=0, step=1) * 0.10
+    nickels = st.number_input("How many nickels?", min_value=0, step=1) * 0.05
+    pennies = st.number_input("How many pennies?", min_value=0, step=1) * 0.01
+    total = quarters + dimes + nickels + pennies
+    if total < cost:
+        st.write("Sorry, that's not enough money. Money refunded.")
+        return False
+    else:
+        change = round(total - cost, 2)
+        st.write(f"Here is ${change} in change.")
+        resources['money'] += cost
+        return True
+
+# Kahve hazırlama fonksiyonu
+def make_coffee(drink):
+    for item, amount in MENU[drink]['ingredients'].items():
+        resources[item] -= amount
+    st.write(f"Here is your {drink}. Enjoy!")
+
+# Streamlit arayüz
+st.title("Simple Coffee Machine")
+
+# Seçenek sunma ve işlem
+choice = st.selectbox("What would you like?", ("espresso", "latte", "cappuccino", "report", "off"))
+
+if choice == "report":
+    Report.display()
+elif choice == "off":
+    st.write("Turning off the coffee machine.")
+elif choice in MENU:
+    if check_resources(choice):
+        if process_payment(MENU[choice]['cost']):
+            make_coffee(choice)
+else:
+    st.write("Please select a valid option.")
